@@ -35,17 +35,17 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function open()
+    final public function open()
     {
-        // TODO: Implement open() method.
+        return $this->dbh;
     }
 
     /**
      * @inheritDoc
      */
-    public function close()
+    final public function close()
     {
-        // TODO: Implement close() method.
+        $this->dbh = null;
     }
 
     /**
@@ -70,23 +70,37 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function getLastId(): string
+    final public function getLastId(): string
     {
-        // TODO: Implement getLastId() method.
+        return "";
     }
 
     /**
      * @inheritDoc
      */
-    public function tableExists(string $tableName): bool
+    final public function tableExists(string $tableName): bool
     {
-        // TODO: Implement tableExists() method.
+        if (!empty($tableName)) {
+            // Try a select statement against the table
+            // Run it in try-catch in case PDO is in ERRMODE_EXCEPTION.
+            try {
+                $result = $this->dbh->query("SELECT 1 FROM {$tableName} LIMIT 1");
+            } catch (Exception $e) {
+                // We got an exception (table not found)
+                return false;
+            }
+
+            // Result is either boolean FALSE (no table found) or PDOStatement Object (table found)
+            return $result !== false;
+        }
+
+        return false;
     }
 
     /**
      * @inheritDoc
      */
-    public function fetch($sql, int $noOfRecords = 10, int $offSet = 0, array $fieldMapping = []): ?DataResult
+    final public function fetch($sql, int $noOfRecords = 10, int $offSet = 0, array $fieldMapping = []): ?DataResult
     {
         return (new PDOQuery($this))->query($sql, $noOfRecords, $offSet, $fieldMapping);
     }
@@ -94,7 +108,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function commit($transactionId = null)
+    final public function commit($transactionId = null)
     {
         return $this->dbh->commit();
     }
@@ -102,7 +116,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function rollback($transactionId = null)
+    final public function rollback($transactionId = null)
     {
         return $this->dbh->rollBack();
     }
@@ -110,7 +124,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function autoCommit(bool $onState = true): void
+    final public function autoCommit(bool $onState = true): void
     {
         $this->dbh->setAttribute(PDO::ATTR_AUTOCOMMIT, $onState);
     }
@@ -118,7 +132,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function startTransaction()
+    final public function startTransaction()
     {
         return $this->dbh->beginTransaction();
     }
@@ -126,7 +140,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function error()
+    final public function error()
     {
         return (new DataError($this->dbh->errorCode(), json_encode($this->dbh->errorInfo())));
     }
@@ -134,15 +148,21 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function getDatabase(): array
+    final public function getDatabase(): array
     {
-        // TODO: Implement getDatabase() method.
+        if (!empty($this->databaseMetaData)) {
+            return $this->databaseMetaData;
+        }
+
+        $this->databaseMetaData = (new PDOMetaData($this))->getDatabaseMetaData();
+
+        return $this->databaseMetaData;
     }
 
     /**
      * @inheritDoc
      */
-    public function getDefaultDatabaseDateFormat(): string
+    final public function getDefaultDatabaseDateFormat(): string
     {
         return "Y-m-d";
     }
@@ -150,7 +170,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function getDefaultDatabasePort(): ?int
+    final public function getDefaultDatabasePort(): ?int
     {
         return null;
     }
@@ -158,7 +178,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function getQueryParam(string $fieldName, int $fieldIndex): string
+    final public function getQueryParam(string $fieldName, int $fieldIndex): string
     {
         return "?";
     }
@@ -166,7 +186,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function isNoSQL(): bool
+    final public function isNoSQL(): bool
     {
         return false;
     }
@@ -174,7 +194,7 @@ class DataPDO implements DataBase
     /**
      * @inheritDoc
      */
-    public function getShortName(): string
+    final public function getShortName(): string
     {
         return "pdo";
     }

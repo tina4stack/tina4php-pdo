@@ -24,6 +24,7 @@
   },
   "require": {
     "tina4stack/tina4php-database": "^2.0",
-    "ext-pdo" : "*"
+    "ext-pdo" : "*",
+    "ext-json": "*"
   }
 }
