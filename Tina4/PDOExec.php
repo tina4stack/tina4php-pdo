@@ -11,10 +11,16 @@ class PDOExec extends DataConnection implements DataBaseExec
 {
 
     /**
-     * @inheritDoc
+     * Execute a PDO Query Statement which ordinarily does not retrieve results
      */
-    public function exec($params, $tranId)
+    final public function exec($params, $tranId): void
     {
-        // TODO: Implement exec() method.
+        if (!empty($params) ) {
+            $preparedQuery = $this->getDbh()->prepare($params[0]);
+            if (!empty($preparedQuery)) {
+                unset($params[0]);
+                $preparedQuery->execute(...$params);
+            }
+        }
     }
 }

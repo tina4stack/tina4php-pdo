@@ -72,7 +72,7 @@ class DataPDO implements DataBase
      */
     final public function getLastId(): string
     {
-        return "";
+        return $this->dbh->lastInsertId();
     }
 
     /**

@@ -31,7 +31,7 @@ class PDOConnection
         try {
             $this->connection = new \PDO($databasePath, $username, $password, $options);
         } catch (\PDOException $e) {
-            \Tina4\Debug("Could not connect to database {$databasePath} with username {$username} and password {$password}", TINA4_LOG_ERROR);
+            \Tina4\Debug::message("Could not connect to database {$databasePath} with username {$username} and password {$password}", TINA4_LOG_ERROR);
             $this->connection = false;
         }
     }

@@ -16,7 +16,8 @@
     "roave/security-advisories": "dev-latest",
     "phpunit/phpunit": "^9",
     "overtrue/phplint": "^2.0",
-    "friendsofphp/php-cs-fixer": "^3.2"
+    "friendsofphp/php-cs-fixer": "^3.2",
+    "tina4stack/tina4php-debug": "^2.0"
   },
   "scripts": {
     "test": "./vendor/bin/phpunit tests --color --log-junit=tests/junit.xml",

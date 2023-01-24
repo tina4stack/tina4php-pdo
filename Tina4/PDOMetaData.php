@@ -13,14 +13,7 @@ class PDOMetaData extends DataConnection implements DataBaseMetaData
     /**
      * @inheritDoc
      */
-    public function __construct(Database $connection)
-    {
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getTables(): array
+    final public function getTables(): array
     {
         // TODO: Implement getTables() method.
     }
