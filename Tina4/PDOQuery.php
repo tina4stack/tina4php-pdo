@@ -5,7 +5,12 @@ namespace Tina4;
 class PDOQuery extends DataConnection implements DataBaseQuery
 {
 
-
+    /**
+     * @param string $initialSQL
+     * @param int $noOfRecords
+     * @param int $offSet
+     * @return string
+     */
     final public function mssql_query(string $initialSQL, int $noOfRecords, int $offSet) : string
     {
         $locateFrom = stripos($initialSQL, "from");
@@ -79,7 +84,7 @@ class PDOQuery extends DataConnection implements DataBaseQuery
                     //select top 10 * from table
                     break;
                 case "dblib":
-                    $sql = $this->mssql_query($initialSQL, $noOfRecords, $offSet);
+                    if (stripos($initialSQL, "select")) $sql = $this->mssql_query($initialSQL, $noOfRecords, $offSet);
                     break;
                 case "sqlite":
                     if (stripos($sql, "limit") === false && stripos($sql, "call") === false) {
@@ -141,21 +146,25 @@ class PDOQuery extends DataConnection implements DataBaseQuery
         }
 
         if (is_array($records) && count($records) > 1) {
-            if (stripos($initialSQL, "returning") === false) {
-                $initialSQL = explode("order", strtolower($initialSQL))[0];
-
-                $sqlCount = "select count(*) as COUNT_RECORDS from ($initialSQL) as t";
-
-                if (is_array($params)) {
-                    $recordCount = $this->getDbh()->prepare($sqlCount);
-                    $recordCount->execute($params);
-                } else {
-                    $recordCount = $this->getDbh()->query($sqlCount);
-                }
-
-                $resultCount = $recordCount->fetch();
+            if (stripos($initialSQL, "@") !== false || stripos($initialSQL, "sp_") !== false) {
+                $resultCount["COUNT_RECORDS"] = count($records);
             } else {
-                $resultCount["COUNT_RECORDS"] = count($records); //used for insert into or update
+                if (stripos($initialSQL, "returning") === false) {
+                    $initialSQL = explode("order", strtolower($initialSQL))[0];
+
+                    $sqlCount = "select count(*) as COUNT_RECORDS from ($initialSQL) as t";
+
+                    if (is_array($params)) {
+                        $recordCount = $this->getDbh()->prepare($sqlCount);
+                        $recordCount->execute($params);
+                    } else {
+                        $recordCount = $this->getDbh()->query($sqlCount);
+                    }
+
+                    $resultCount = $recordCount->fetch();
+                } else {
+                    $resultCount["COUNT_RECORDS"] = count($records); //used for insert into or update
+                }
             }
         } else {
             $resultCount["COUNT_RECORDS"] = count($records);
