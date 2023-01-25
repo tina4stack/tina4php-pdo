@@ -30,7 +30,7 @@ class PDOQuery extends DataConnection implements DataBaseQuery
                     $limit = " first {$noOfRecords} skip {$offSet} ";
                     $posSelect = stripos($initialSQL, "select") + strlen("select");
                     $sql = substr($initialSQL, 0, $posSelect) . $limit . substr($initialSQL, $posSelect);
-                //select first 10 skip 10 from table
+                //select top 10 * from table
                 case "dblib":
                     //$limit = " TOP {$noOfRecords} ";
                     //$posSelect = stripos($initialSQL, "select") + strlen("select");
@@ -90,7 +90,6 @@ class PDOQuery extends DataConnection implements DataBaseQuery
                 ));
             }
         }
-
 
         if (is_array($records) && count($records) > 1) {
             if (stripos($initialSQL, "returning") === false) {
