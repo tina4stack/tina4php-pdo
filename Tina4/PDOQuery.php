@@ -6,6 +6,52 @@ class PDOQuery extends DataConnection implements DataBaseQuery
 {
 
 
+    final public function mssql_query(string $initialSQL, int $noOfRecords, int $offSet) : string
+    {
+        $locateFrom = stripos($initialSQL, "from");
+        $fields = substr($initialSQL, strlen("select"),$locateFrom - strlen("select"));
+
+        $locateWhere = strlen($initialSQL);
+        if (stripos($initialSQL, " where ") !== false) $locateWhere = stripos($initialSQL, " where ");
+
+        $tables = substr($initialSQL, ($locateFrom + strlen("from")) , $locateWhere - ($locateFrom + strlen("from")));
+
+        $where = "";
+       if ($locateWhere <>  strlen($initialSQL)) {
+            $endWhere = strlen($initialSQL);
+            if (stripos($initialSQL, " group ") !== false) {
+                $endWhere = stripos($initialSQL, " group ");
+            } elseif (stripos($initialSQL, " order ") !== false) {
+                $endWhere = stripos($initialSQL, " order ");
+            }
+            $where = substr($initialSQL, $locateWhere + strlen(" where "), $endWhere - ($locateWhere + strlen(" where ")));
+        }
+
+        $groupBy = "";
+        if (stripos($initialSQL, " group by ") !== false) {
+            $endGroupBy = strlen($initialSQL);
+            if (stripos($initialSQL, " order by ") !== false) {
+                $endGroupBy = stripos($initialSQL, " order by");
+            }
+            $locateGroupBy = stripos($initialSQL, " group by");
+            if ($locateGroupBy > 0) $groupBy = substr($initialSQL,$locateGroupBy + strlen(" group by") ,$endGroupBy - ($locateGroupBy + strlen("group by")));
+        }
+
+        $orderBy = "";
+        if (stripos($initialSQL, " order by ") !== false) {
+            $locateOrderBy = stripos($initialSQL, " order by");
+            $orderBy = substr($initialSQL, $locateOrderBy + strlen(" order by"), strlen($initialSQL));
+        }
+
+        //"SELECT $fields FROM $tables WHERE $where GROUP BY $groupBy ORDER BY $orderBy\n";
+
+        return "select top {$noOfRecords} {$fields} from (
+                  select {$fields}, ROW_NUMBER() over (order by {$orderBy}) as r_n_n
+              from {$tables} ".(!empty($where) ? " where {$where}": "")."
+                         ".(!empty($groupBy) ? " group by {$groupBy}": "")."
+            ) a where r_n_n > {$offSet}";
+    }
+
     /**
      * @inheritDoc
      */
@@ -30,20 +76,23 @@ class PDOQuery extends DataConnection implements DataBaseQuery
                     $limit = " first {$noOfRecords} skip {$offSet} ";
                     $posSelect = stripos($initialSQL, "select") + strlen("select");
                     $sql = substr($initialSQL, 0, $posSelect) . $limit . substr($initialSQL, $posSelect);
-                //select top 10 * from table
+                    //select top 10 * from table
+                    break;
                 case "dblib":
-                    //$limit = " TOP {$noOfRecords} ";
-                    //$posSelect = stripos($initialSQL, "select") + strlen("select");
-                    //$sql = substr($initialSQL, 0, $posSelect) . $limit . substr($initialSQL, $posSelect);
+                    $sql = $this->mssql_query($initialSQL, $noOfRecords, $offSet);
+                    break;
                 case "sqlite":
                     if (stripos($sql, "limit") === false && stripos($sql, "call") === false) {
                         $sql .= " limit {$offSet},{$noOfRecords}";
                     }
+                    break;
                 default:
                     if (stripos($sql, "limit") === false && stripos($sql, "call") === false) {
                         $sql .= " limit {$noOfRecords} offset {$offSet}";
                     }
+                    break;
             }
+
         }
 
         if (is_array($params)) {
@@ -93,8 +142,17 @@ class PDOQuery extends DataConnection implements DataBaseQuery
 
         if (is_array($records) && count($records) > 1) {
             if (stripos($initialSQL, "returning") === false) {
-                $sqlCount = "select count(*) as COUNT_RECORDS from ($initialSQL)";
-                $recordCount = $this->getDbh()->query($sqlCount);
+                $initialSQL = explode("order", strtolower($initialSQL))[0];
+
+                $sqlCount = "select count(*) as COUNT_RECORDS from ($initialSQL) as t";
+
+                if (is_array($params)) {
+                    $recordCount = $this->getDbh()->prepare($sqlCount);
+                    $recordCount->execute($params);
+                } else {
+                    $recordCount = $this->getDbh()->query($sqlCount);
+                }
+
                 $resultCount = $recordCount->fetch();
             } else {
                 $resultCount["COUNT_RECORDS"] = count($records); //used for insert into or update
