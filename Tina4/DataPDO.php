@@ -30,6 +30,7 @@ class DataPDO implements DataBase
         }
 
         $this->dbh = (new PDOConnection($database, $username, $password, $options))->getConnection();
+        $this->dateFormat = $dateFormat;
     }
 
     /**

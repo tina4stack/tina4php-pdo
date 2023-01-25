@@ -15,6 +15,11 @@ $DB->exec("CREATE TABLE IF NOT EXISTS `users` (
 
 $DB->exec("insert into users (name, email, password) values ('John Smith', 'andre@test.com', 'none')");
 
+$users = $DB->fetch(["select * from users where id = ?", 1]);
+
+print_r ($users);
+
 $users = $DB->fetch("select * from users");
+
 
 print_r ($users);
