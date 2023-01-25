@@ -24,15 +24,17 @@ class PDOQuery extends DataConnection implements DataBaseQuery
             $initialSQL = $sql;
         }
 
-        //For firebird
         if (stripos($initialSQL, "returning") === false) {
             switch ($this->getDbh()->getAttribute(\PDO::ATTR_DRIVER_NAME)) {
-
                 case "firebird":
                     $limit = " first {$noOfRecords} skip {$offSet} ";
                     $posSelect = stripos($initialSQL, "select") + strlen("select");
                     $sql = substr($initialSQL, 0, $posSelect) . $limit . substr($initialSQL, $posSelect);
                 //select first 10 skip 10 from table
+                case "dblib":
+                    //$limit = " TOP {$noOfRecords} ";
+                    //$posSelect = stripos($initialSQL, "select") + strlen("select");
+                    //$sql = substr($initialSQL, 0, $posSelect) . $limit . substr($initialSQL, $posSelect);
                 case "sqlite":
                     if (stripos($sql, "limit") === false && stripos($sql, "call") === false) {
                         $sql .= " limit {$offSet},{$noOfRecords}";
